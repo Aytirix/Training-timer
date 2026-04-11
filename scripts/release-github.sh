@@ -45,6 +45,10 @@ Options:
 Environment (.env):
   FLUTTER_SDK=/absolute/path/to/flutter
   ANDROID_SDK_ROOT=/absolute/path/to/android/sdk
+  ANDROID_KEYSTORE_PATH=/absolute/path/to/release-keystore.jks
+  ANDROID_KEYSTORE_PASSWORD=<keystore-password>
+  ANDROID_KEY_ALIAS=<key-alias>
+  ANDROID_KEY_PASSWORD=<key-password>
   GITHUB_TOKEN=<token with Contents: write>
   GITHUB_REPOSITORY=owner/repo   # optionnel, inféré depuis origin sinon
 EOF
@@ -65,10 +69,24 @@ require_cmd() {
 
 load_env() {
   if [[ -f "$ENV_FILE" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    source "$ENV_FILE"
-    set +a
+    local line key value
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+      [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
+      line="${line#export }"
+      key="${line%%=*}"
+      value="${line#*=}"
+
+      key="$(printf '%s' "$key" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+      [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+
+      if [[ "$value" =~ ^\".*\"$ ]] || [[ "$value" =~ ^\'.*\'$ ]]; then
+        value="${value:1:-1}"
+      fi
+
+      export "$key=$value"
+    done < "$ENV_FILE"
   fi
 }
 
@@ -204,6 +222,14 @@ prepare_flutter() {
   fi
 }
 
+ensure_release_signing() {
+  [[ -n "${ANDROID_KEYSTORE_PATH:-}" ]] || fail "ANDROID_KEYSTORE_PATH doit être défini dans .env"
+  [[ -f "$ANDROID_KEYSTORE_PATH" ]] || fail "Keystore release introuvable: $ANDROID_KEYSTORE_PATH"
+  [[ -n "${ANDROID_KEYSTORE_PASSWORD:-}" ]] || fail "ANDROID_KEYSTORE_PASSWORD doit être défini dans .env"
+  [[ -n "${ANDROID_KEY_ALIAS:-}" ]] || fail "ANDROID_KEY_ALIAS doit être défini dans .env"
+  [[ -n "${ANDROID_KEY_PASSWORD:-}" ]] || fail "ANDROID_KEY_PASSWORD doit être défini dans .env"
+}
+
 github_request_json() {
   local method="$1"
   local url="$2"
@@ -291,7 +317,7 @@ asset_content_type() {
 
 build_artifacts() {
   local safe_tag output_dir
-  safe_tag="$(printf '%s' "$TAG" | tr -c '[:alnum:]._-+' '_')"
+  safe_tag="$(printf '%s' "$TAG" | sed 's/[^A-Za-z0-9._+-]/_/g')"
   output_dir="$ROOT_DIR/build/releases/$safe_tag"
   mkdir -p "$output_dir"
 
@@ -437,6 +463,7 @@ main() {
   [[ -n "${GITHUB_TOKEN:-}" ]] || fail "GITHUB_TOKEN doit être défini dans .env"
 
   prepare_flutter
+  ensure_release_signing
   ensure_git_state
   resolve_version
 
@@ -444,8 +471,6 @@ main() {
   log "Repository GitHub: $REPOSITORY"
   log "Target commitish: $TARGET_COMMITISH"
   log "Tag de release: $TAG"
-
-  log "Attention: la config Android release actuelle utilise la signature debug."
   build_artifacts
   get_or_create_release "$REPOSITORY"
   upload_assets

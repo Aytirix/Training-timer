@@ -11,6 +11,8 @@ FLUTTER := $(FLUTTER_SDK)/bin/flutter
 FLUTTER_ENV := PATH=$(FLUTTER_SDK)/bin:$$PATH
 ANDROID_SDK_ROOT ?= $(HOME)/Android/Sdk
 ADB := $(ANDROID_SDK_ROOT)/platform-tools/adb
+ANDROID_KEYSTORE_VALIDITY_DAYS ?= 10000
+ANDROID_KEYSTORE_DNAME ?=
 
 .PHONY: help
 help: ## general: Afficher les commandes disponibles
@@ -160,6 +162,10 @@ app-run-adb: ## app: Choisir un appareil ADB pret puis lancer l app dessus
 	device_id="$${selected%%$$'\t'*}"; \
 	echo "Lancement sur $$device_id..."; \
 	$(FLUTTER_ENV) $(FLUTTER) run -d "$$device_id"
+
+.PHONY: app-generate-keystore
+app-generate-keystore: ## app: Generer automatiquement la signature Android release et l enregistrer dans .env
+	@$(ROOT_DIR)/scripts/setup-android-signing.sh
 
 .PHONY: app-release-github
 app-release-github: ## app: Builder l app en release puis publier les artefacts sur GitHub

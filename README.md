@@ -106,6 +106,10 @@ Variables reconnues :
 ```bash
 FLUTTER_SDK=/chemin/absolu/vers/flutter
 ANDROID_SDK_ROOT=/chemin/absolu/vers/android/sdk
+ANDROID_KEYSTORE_PATH=/chemin/absolu/vers/release-keystore.jks
+ANDROID_KEYSTORE_PASSWORD=<mot-de-passe-keystore>
+ANDROID_KEY_ALIAS=<alias-de-cle>
+ANDROID_KEY_PASSWORD=<mot-de-passe-cle>
 GITHUB_TOKEN=<token GitHub>
 ```
 
@@ -125,7 +129,51 @@ Puis éditer `.env` avec vos chemins locaux.
 Pour publier une release GitHub avec le script de release, ajoutez aussi :
 
 ```bash
+ANDROID_KEYSTORE_PATH=/chemin/absolu/vers/release-keystore.jks
+ANDROID_KEYSTORE_PASSWORD=<mot-de-passe-keystore>
+ANDROID_KEY_ALIAS=<alias-de-cle>
+ANDROID_KEY_PASSWORD=<mot-de-passe-cle>
 GITHUB_TOKEN=<token avec permission Contents: write>
+```
+
+Si vous n'avez pas encore de keystore release Android, vous pouvez aussi la générer directement via le `Makefile` :
+
+```bash
+make app-generate-keystore
+```
+
+Cette commande peut maintenant remplir automatiquement les valeurs manquantes dans `.env`, générer les mots de passe, puis créer la keystore release.
+
+Par défaut, elle choisit :
+
+- un chemin de keystore local dans le projet ;
+- un alias par défaut ;
+- des mots de passe aléatoires ;
+- une durée de validité longue ;
+- un `dname` par défaut pour éviter les questions interactives.
+
+Les valeurs finales sont ensuite enregistrées dans `.env`.
+
+Important :
+
+- cette génération automatique fonctionne très bien pour créer une nouvelle keystore ;
+- si une keystore existe déjà, le script ne peut pas retrouver son mot de passe automatiquement ;
+- il faut donc conserver le fichier keystore et les valeurs enregistrées dans `.env` si vous voulez republier des mises à jour avec la même signature.
+
+Variables concernées :
+
+```bash
+ANDROID_KEYSTORE_PATH=...
+ANDROID_KEYSTORE_PASSWORD=...
+ANDROID_KEY_ALIAS=...
+ANDROID_KEY_PASSWORD=...
+```
+
+Options facultatives :
+
+```bash
+ANDROID_KEYSTORE_VALIDITY_DAYS=10000
+ANDROID_KEYSTORE_DNAME=CN=Training Timer, OU=Mobile, O=Your Org, L=Paris, ST=Ile-de-France, C=FR
 ```
 
 Vous pouvez donc ajuster vos chemins SDK une fois pour toutes dans `.env`, puis utiliser simplement :
@@ -161,6 +209,7 @@ Ce script :
 Prérequis :
 
 - `GITHUB_TOKEN` défini dans `.env` ;
+- keystore release Android configurée dans `.env` ;
 - branche courante poussée sur `origin` ;
 - worktree Git propre, sauf si vous utilisez `--allow-dirty`.
 
@@ -190,7 +239,7 @@ Important :
 
 - par défaut, le script publie un `apk` release ;
 - `--artifact aab` ou `--artifact both` permet de publier un bundle Android aussi ;
-- la config Android actuelle signe encore la release avec la clé debug, donc c'est adapté à une distribution GitHub de test, pas à une publication store définitive.
+- le script refuse maintenant de publier tant qu'une vraie signature release Android n'est pas configurée dans `.env`.
 
 ### Option manuelle : sans le Makefile
 
