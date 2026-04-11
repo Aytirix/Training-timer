@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Read(//home/theo/**)",
+      "Read(//snap/**)",
+      "Bash(make app-get:*)",
+      "Bash(make app-install-adb:*)"
+    ]
+  }
+}

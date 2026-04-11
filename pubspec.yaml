@@ -1,0 +1,24 @@
+name: traction_timer
+description: Pull-up & calisthenics pyramid timer with smart rest and optional TTS voice.
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  go_router: ^13.2.0
+  shared_preferences: ^2.2.3
+  flutter_tts: ^4.0.2
+  uuid: ^4.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
