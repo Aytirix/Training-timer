@@ -2,6 +2,10 @@
 SHELL := /usr/bin/env bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ENV_FILE ?= .env
+
+-include $(ENV_FILE)
+
 FLUTTER_SDK ?= $(HOME)/Documents/github/essence/.tooling/flutter
 FLUTTER := $(FLUTTER_SDK)/bin/flutter
 FLUTTER_ENV := PATH=$(FLUTTER_SDK)/bin:$$PATH
@@ -156,6 +160,10 @@ app-run-adb: ## app: Choisir un appareil ADB pret puis lancer l app dessus
 	device_id="$${selected%%$$'\t'*}"; \
 	echo "Lancement sur $$device_id..."; \
 	$(FLUTTER_ENV) $(FLUTTER) run -d "$$device_id"
+
+.PHONY: app-release-github
+app-release-github: ## app: Builder l app en release puis publier les artefacts sur GitHub
+	@$(ROOT_DIR)/scripts/release-github.sh $(ARGS)
 
 .PHONY: check
 check: ## quality: Analyser et tester l app Flutter
