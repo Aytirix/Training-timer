@@ -96,7 +96,7 @@ class _VoiceSettingsScreenState extends ConsumerState<VoiceSettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.danger.withOpacity(0.12),
+                  color: AppColors.danger.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -193,7 +193,7 @@ class _SelectedVoiceBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.accentMuted,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -237,11 +237,11 @@ class _NoVoiceBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(Icons.volume_off_rounded,
+          Icon(Icons.volume_off_rounded,
               color: AppColors.textMuted, size: 24),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,17 +301,17 @@ class _VoiceList extends StatelessWidget {
 class _EmptyVoices extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: EdgeInsets.all(40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.hearing_disabled_outlined,
+            Icon(Icons.hearing_disabled_outlined,
                 size: 64, color: AppColors.textMuted),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text('Aucune voix disponible', style: AppTypography.headingMedium),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Vérifiez les paramètres de synthèse vocale de votre appareil Android (Paramètres > Accessibilité > Synthèse vocale).',
               style: AppTypography.bodyMedium,

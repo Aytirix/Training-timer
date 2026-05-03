@@ -54,7 +54,7 @@ class _QuickInputFieldState extends State<QuickInputField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Label ──
-        Text('Saisie rapide', style: AppTypography.labelMedium),
+        const Text('Saisie rapide', style: AppTypography.labelMedium),
         const SizedBox(height: 8),
 
         // ── Champ de texte ──
@@ -149,7 +149,7 @@ class _ParsePreview extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.accentMuted,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +179,7 @@ class _ParsePreview extends StatelessWidget {
           // Total
           Row(
             children: [
-              Text(
+              const Text(
                 'Total : ',
                 style: AppTypography.labelSmall,
               ),

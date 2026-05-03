@@ -38,7 +38,6 @@ class VoiceInfo {
 class TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
-  String? _currentVoiceKey;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -94,7 +93,6 @@ class TtsService {
       final voiceMap = <String, String>{'name': voice.name, 'locale': voice.locale};
       if (voice.identifier != null) voiceMap['identifier'] = voice.identifier!;
       await _tts.setVoice(voiceMap);
-      _currentVoiceKey = voice.key;
       return true;
     } catch (_) {
       return false;

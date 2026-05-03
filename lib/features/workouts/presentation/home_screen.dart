@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
@@ -17,6 +19,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedId;
+  Timer? _voiceBannerTimer;
 
   @override
   void initState() {
@@ -31,15 +34,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  void _checkVoiceConfig() {
+  Future<void> _checkVoiceConfig() async {
     final voice = ref.read(voiceProvider.notifier);
-    if (!voice.isConfigured) {
-      // Propose la configuration voix de façon non bloquante
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (!mounted) return;
-        _showVoiceBanner();
-      });
-    }
+    if (voice.isConfigured) return;
+
+    await voice.loadVoices();
+    if (!mounted || voice.isConfigured) return;
+
+    // Propose la configuration voix uniquement si l'auto-sélection a échoué.
+    _voiceBannerTimer = Timer(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      _showVoiceBanner();
+    });
+  }
+
+  @override
+  void dispose() {
+    _voiceBannerTimer?.cancel();
+    super.dispose();
   }
 
   void _showVoiceBanner() {

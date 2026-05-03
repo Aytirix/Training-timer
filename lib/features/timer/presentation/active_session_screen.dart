@@ -59,7 +59,7 @@ class _SessionView extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
+            child: const Text(
               'Arrêter',
               style: TextStyle(color: AppColors.danger),
             ),
@@ -238,7 +238,7 @@ class _SessionHeader extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('Reste', style: AppTypography.labelSmall),
+              const Text('Reste', style: AppTypography.labelSmall),
               Text(
                 state.estimatedRemainingLabel,
                 style: AppTypography.timerSmall.copyWith(
@@ -272,7 +272,7 @@ class _NoSession extends StatelessWidget {
           children: [
             const Icon(Icons.timer_off_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            Text('Aucune séance active', style: AppTypography.headingMedium),
+            const Text('Aucune séance active', style: AppTypography.headingMedium),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: onBack,

@@ -22,7 +22,7 @@ class SessionProgress extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Bloc', style: AppTypography.labelSmall),
+                  const Text('Bloc', style: AppTypography.labelSmall),
                   Text(
                     state.currentStep?.blockName ?? '—',
                     style: AppTypography.labelLarge,
@@ -36,7 +36,7 @@ class SessionProgress extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text('Série', style: AppTypography.labelSmall),
+                const Text('Série', style: AppTypography.labelSmall),
                 Text(
                   '${state.currentStepIndex + 1} / ${state.totalSteps}',
                   style: AppTypography.labelLarge,
@@ -49,7 +49,7 @@ class SessionProgress extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Écoulé', style: AppTypography.labelSmall),
+                  const Text('Écoulé', style: AppTypography.labelSmall),
                   Text(
                     state.elapsedLabel,
                     style: AppTypography.timerSmall.copyWith(fontSize: 18),
@@ -133,7 +133,7 @@ class _StepsMinimap extends StatelessWidget {
 
           Color color;
           if (isDone) {
-            color = AppColors.active.withOpacity(0.6);
+            color = AppColors.active.withValues(alpha: 0.6);
           } else if (isCurrent) {
             color = AppColors.accent;
           } else {
@@ -157,7 +157,7 @@ class _StepsMinimap extends StatelessWidget {
                     color: isCurrent
                         ? AppColors.textOnAccent
                         : isDone
-                            ? AppColors.textPrimary.withOpacity(0.7)
+                            ? AppColors.textPrimary.withValues(alpha: 0.7)
                             : AppColors.textMuted,
                     fontSize: 9,
                   ),

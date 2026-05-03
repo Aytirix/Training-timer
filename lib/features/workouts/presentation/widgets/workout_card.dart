@@ -89,7 +89,7 @@ class WorkoutCard extends StatelessWidget {
             // ── Durée cible & delta ──
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.flag_outlined,
                   size: 14,
                   color: AppColors.textMuted,
@@ -164,7 +164,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -208,12 +208,12 @@ class _PopupMenu extends StatelessWidget {
             ),
           ),
         if (onDelete != null)
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'delete',
             child: Row(
               children: [
                 Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   'Supprimer',
                   style: TextStyle(color: AppColors.danger),

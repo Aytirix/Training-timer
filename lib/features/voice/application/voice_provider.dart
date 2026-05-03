@@ -38,7 +38,8 @@ class VoiceState {
   }) {
     return VoiceState(
       availableVoices: availableVoices ?? this.availableVoices,
-      selectedVoice: clearSelection ? null : (selectedVoice ?? this.selectedVoice),
+      selectedVoice:
+          clearSelection ? null : (selectedVoice ?? this.selectedVoice),
       voiceEnabled: voiceEnabled ?? this.voiceEnabled,
       isLoading: isLoading ?? this.isLoading,
       isTesting: isTesting ?? this.isTesting,
@@ -52,9 +53,8 @@ class VoiceState {
 class VoiceNotifier extends StateNotifier<VoiceState> {
   final TtsService _tts;
   final LocalStorage _storage;
-  final Ref _ref;
 
-  VoiceNotifier(this._tts, this._storage, this._ref)
+  VoiceNotifier(this._tts, this._storage)
       : super(VoiceState(
           voiceEnabled: _storage.voiceEnabled,
         ));
@@ -81,6 +81,18 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
             error: 'La voix précédemment sélectionnée n\'est plus disponible.',
           );
           return;
+        }
+      } else if (voices.isNotEmpty) {
+        selected = voices.first;
+        final ok = await _tts.setVoice(selected);
+        if (ok) {
+          await _storage.saveVoiceSettings(
+            voiceId: selected.key,
+            voiceName: selected.name,
+            enabled: true,
+          );
+        } else {
+          selected = null;
         }
       }
 
@@ -124,7 +136,8 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
   /// Désactive la voix sans supprimer la sélection.
   Future<void> disableVoice() async {
     await _tts.stop();
-    state = state.copyWith(voiceEnabled: false, clearSelection: true, clearError: true);
+    state = state.copyWith(
+        voiceEnabled: false, clearSelection: true, clearError: true);
     await _storage.clearVoice();
   }
 
@@ -150,5 +163,5 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 final voiceProvider = StateNotifierProvider<VoiceNotifier, VoiceState>((ref) {
   final tts = ref.watch(ttsServiceProvider);
   final storage = ref.watch(localStorageProvider);
-  return VoiceNotifier(tts, storage, ref);
+  return VoiceNotifier(tts, storage);
 });

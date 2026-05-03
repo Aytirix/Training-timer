@@ -38,7 +38,7 @@ class _PreparingDisplay extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Préparez-vous', style: AppTypography.headingLarge),
+        const Text('Préparez-vous', style: AppTypography.headingLarge),
         const SizedBox(height: 16),
         Text(
           '${state.phaseRemainingSeconds}',
@@ -77,7 +77,7 @@ class _CountdownDisplay extends StatelessWidget {
         Text(
           reps == 1 ? 'traction' : 'tractions',
           style: AppTypography.headingMedium.copyWith(
-            color: AppColors.accent.withOpacity(0.7),
+            color: AppColors.accent.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 40),
@@ -190,7 +190,7 @@ class _RestingDisplay extends StatelessWidget {
         if (nextReps != null)
           Column(
             children: [
-              Text('Prochaine série', style: AppTypography.bodyMedium),
+              const Text('Prochaine série', style: AppTypography.bodyMedium),
               const SizedBox(height: 4),
               Text(
                 '$nextReps',
@@ -303,7 +303,7 @@ class _FinishedDisplay extends StatelessWidget {
           style: AppTypography.displayMedium.copyWith(color: AppColors.accent),
         ),
         const SizedBox(height: 8),
-        Text(
+        const Text(
           'Séance terminée',
           style: AppTypography.headingMedium,
         ),

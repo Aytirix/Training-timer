@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../domain/timer_state.dart';
 
 /// Boutons de contrôle du timer (pause, reprise, skip, précédent, stop).

@@ -5,7 +5,9 @@
       "Read(//home/theo/**)",
       "Read(//snap/**)",
       "Bash(make app-get:*)",
-      "Bash(make app-install-adb:*)"
+      "Bash(make app-install-adb:*)",
+      "Bash(/home/theo/.var/flutter/bin/flutter analyze *)",
+      "Bash(/home/theo/.var/flutter/bin/flutter test *)"
     ]
   }
 }

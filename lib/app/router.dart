@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../features/workouts/presentation/home_screen.dart';
 import '../features/workouts/presentation/workout_editor_screen.dart';
 import '../features/workouts/presentation/workout_type_screen.dart';
 import '../features/timer/presentation/active_session_screen.dart';
 import '../features/voice/presentation/voice_settings_screen.dart';
+import '../features/gym_execution/presentation/active_gym_session_screen.dart';
 import '../core/models/workout_block.dart';
+import 'main_tab_screen.dart';
 
 abstract class AppRoutes {
   static const home = '/';
@@ -14,6 +15,8 @@ abstract class AppRoutes {
   static const workoutEdit = '/workout/:id';
   static const session = '/session';
   static const voice = '/voice';
+  static const gym = '/gym';
+  static const gymSession = '/gym/session/:id';
 }
 
 final appRouter = GoRouter(
@@ -22,7 +25,11 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: AppRoutes.home,
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) => const MainTabScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.gym,
+      builder: (context, state) => const MainTabScreen(initialIndex: 1),
     ),
     GoRoute(
       path: AppRoutes.workoutNew,
@@ -49,6 +56,13 @@ final appRouter = GoRouter(
       path: AppRoutes.voice,
       builder: (context, state) => const VoiceSettingsScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.gymSession,
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ActiveGymSessionScreen(sessionId: id);
+      },
+    ),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(
@@ -57,7 +71,6 @@ final appRouter = GoRouter(
   ),
 );
 
-// Helpers de navigation
 extension AppNavigation on BuildContext {
   void goHome() => go(AppRoutes.home);
   void goNewWorkout() => push(AppRoutes.workoutNew);
@@ -65,4 +78,6 @@ extension AppNavigation on BuildContext {
   void goEditWorkout(String id) => push('/workout/$id');
   void goSession() => go(AppRoutes.session);
   void goVoice() => go(AppRoutes.voice);
+  void goGym() => go(AppRoutes.gym);
+  void goActiveGymSession(String id) => push('/gym/session/$id');
 }

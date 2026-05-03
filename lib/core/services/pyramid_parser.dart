@@ -99,7 +99,7 @@ class PyramidParser {
       sequence.add(n);
     }
 
-    if (sequence.length < 1) {
+    if (sequence.isEmpty) {
       return _LineResult.error('Ligne $lineNumber : séquence trop courte.');
     }
 

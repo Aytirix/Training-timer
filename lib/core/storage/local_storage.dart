@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/workout_session.dart';
+import '../models/gym/gym_exercise.dart';
+import '../models/gym/gym_session.dart';
 
 /// Clés de stockage SharedPreferences.
 class StorageKeys {
@@ -10,6 +12,12 @@ class StorageKeys {
   static const String voiceEnabled = 'voice_enabled';
   static const String voiceConfigured = 'voice_configured'; // a-t-on déjà vu l'écran config voix
   static const String activeSessionId = 'active_session_id';
+
+  // Gym (séances de salle de sport)
+  static const String gymExercises = 'gym_exercises';
+  static const String gymSessions = 'gym_sessions';
+  static const String gymBeepEnabled = 'gym_beep_enabled';
+  static const String gymVoiceEnabled = 'gym_voice_enabled';
 }
 
 /// Service de persistance locale (SharedPreferences).
@@ -88,5 +96,59 @@ class LocalStorage {
     await _prefs.remove(StorageKeys.selectedVoiceId);
     await _prefs.remove(StorageKeys.selectedVoiceName);
     await _prefs.setBool(StorageKeys.voiceEnabled, false);
+  }
+
+  // ───────── Gym - Exercices globaux ─────────
+
+  List<GymExercise> loadGymExercises() {
+    final raw = _prefs.getString(StorageKeys.gymExercises);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final list = jsonDecode(raw) as List;
+      return list
+          .map((e) => GymExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveGymExercises(List<GymExercise> exercises) async {
+    final encoded = jsonEncode(exercises.map((e) => e.toJson()).toList());
+    await _prefs.setString(StorageKeys.gymExercises, encoded);
+  }
+
+  // ───────── Gym - Séances ─────────
+
+  List<GymSession> loadGymSessions() {
+    final raw = _prefs.getString(StorageKeys.gymSessions);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final list = jsonDecode(raw) as List;
+      return list
+          .map((e) => GymSession.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveGymSessions(List<GymSession> sessions) async {
+    final encoded = jsonEncode(sessions.map((s) => s.toJson()).toList());
+    await _prefs.setString(StorageKeys.gymSessions, encoded);
+  }
+
+  // ───────── Gym - Préférences alertes ─────────
+
+  bool get gymBeepEnabled => _prefs.getBool(StorageKeys.gymBeepEnabled) ?? true;
+  bool get gymVoiceEnabled =>
+      _prefs.getBool(StorageKeys.gymVoiceEnabled) ?? false;
+
+  Future<void> setGymBeepEnabled(bool value) async {
+    await _prefs.setBool(StorageKeys.gymBeepEnabled, value);
+  }
+
+  Future<void> setGymVoiceEnabled(bool value) async {
+    await _prefs.setBool(StorageKeys.gymVoiceEnabled, value);
   }
 }
