@@ -145,4 +145,13 @@ void main() {
 
     expect(GymVideoLauncher.videoLabel(video), 'Lire la vidéo YouTube');
   });
+
+  test('launcher vidéo re-détecte YouTube quand source legacy = unknown', () {
+    const video = ExerciseVideo(
+      source: ExerciseVideoSource.unknown,
+      url: 'https://www.youtube.com/watch?v=abc123',
+    );
+
+    expect(GymVideoLauncher.videoLabel(video), 'Lire la vidéo YouTube');
+  });
 }

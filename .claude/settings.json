@@ -7,7 +7,22 @@
       "Bash(make app-get:*)",
       "Bash(make app-install-adb:*)",
       "Bash(/home/theo/.var/flutter/bin/flutter analyze *)",
-      "Bash(/home/theo/.var/flutter/bin/flutter test *)"
+      "Bash(/home/theo/.var/flutter/bin/flutter test *)",
+      "Bash(adb devices *)",
+      "Bash(mkdir -p /tmp/traction_debug)",
+      "Bash(adb exec-out *)",
+      "Read(//tmp/traction_debug/**)",
+      "Bash(adb shell *)",
+      "Bash(flutter analyze *)",
+      "Bash(python3 -c \"import sys,html,re; t=html.unescape\\(sys.stdin.read\\(\\)\\); m=re.findall\\(r'\\\\\"source\\\\\":\\\\\"\\(\\\\w+\\)\\\\\",\\\\\"url\\\\\":\\\\\"\\([^\\\\\"]*youtube[^\\\\\"]*\\)\\\\\"', t\\); [print\\(s,u\\) for s,u in m[:5]]\")",
+      "Bash(python3 -c ' *)",
+      "Bash(flutter test *)",
+      "Bash(grep -rn \"Durée\\\\|durationSeconds\\\\|300s\\\\|'\\\\${.*}s'\" /home/theo/Documents/github/traction/lib/features/gym_execution/)",
+      "Bash(grep -rn \"durationSeconds}s\\\\|'\\\\${.*duration.*}s'\\\\|'\\\\${.*Seconds}s'\" /home/theo/Documents/github/traction/lib/)",
+      "Bash(flutter build *)"
+    ],
+    "additionalDirectories": [
+      "/tmp/traction_debug"
     ]
   }
 }

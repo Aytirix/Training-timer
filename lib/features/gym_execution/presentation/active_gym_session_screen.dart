@@ -270,7 +270,12 @@ class _SetView extends StatelessWidget {
           Text(exercise?.name ?? 'Exercice', style: AppTypography.headingLarge),
           const SizedBox(height: 4),
           Text(
-            'Série ${(step.setIndex ?? 0) + 1} / ${step.totalSets} • ${type?.label ?? ''}',
+            [
+              'Série ${(step.setIndex ?? 0) + 1} / ${step.totalSets}',
+              if (type?.label.isNotEmpty == true) type!.label,
+              if (set.durationSeconds != null)
+                'Durée ${_formatDurationLabel(set.durationSeconds!)}',
+            ].join(' • '),
             style: AppTypography.bodyMedium,
           ),
           const SizedBox(height: 24),
@@ -281,8 +286,6 @@ class _SetView extends StatelessWidget {
                 _Stat(label: 'Poids', value: '${set.weightKg} kg'),
               if (set.repetitions != null)
                 _Stat(label: 'Reps', value: '${set.repetitions}'),
-              if (set.durationSeconds != null)
-                _Stat(label: 'Durée', value: '${set.durationSeconds}s'),
             ],
           ),
           const SizedBox(height: 24),
@@ -329,16 +332,18 @@ class _RestView extends StatelessWidget {
   }
 }
 
+String _formatDurationLabel(int seconds) {
+  final m = seconds ~/ 60;
+  final s = seconds % 60;
+  return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+}
+
 class _CountdownDisplay extends StatelessWidget {
   final int remaining;
   final bool running;
   const _CountdownDisplay({required this.remaining, required this.running});
 
-  String _format(int seconds) {
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-  }
+  String _format(int seconds) => _formatDurationLabel(seconds);
 
   @override
   Widget build(BuildContext context) {

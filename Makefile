@@ -130,7 +130,7 @@ app-install-adb: ## app: Choisir un appareil ADB pret puis installer l app dessu
 	device_id="$${selected%%$$'\t'*}"; \
 	echo "Preparation de $$device_id..."; \
 	$(FLUTTER_ENV) $(FLUTTER) build apk --debug; \
-	$(FLUTTER_ENV) $(FLUTTER) install -d "$$device_id" --debug --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk
+	$(ADB) -s "$$device_id" install -r -d build/app/outputs/flutter-apk/app-debug.apk
 
 .PHONY: app-run-adb
 app-run-adb: ## app: Choisir un appareil ADB pret puis lancer l app dessus

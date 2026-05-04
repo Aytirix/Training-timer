@@ -23,14 +23,17 @@ class GymVideoPlayerScreen extends StatefulWidget {
 
 class _GymVideoPlayerScreenState extends State<GymVideoPlayerScreen> {
   YoutubePlayerController? _youtubeController;
+  late final ExerciseVideoSource _effectiveSource;
+  bool _isFullScreen = false;
 
   @override
   void initState() {
     super.initState();
+    _effectiveSource = _resolveSource(widget.video);
     final videoId = widget.video.url == null
         ? null
         : ExerciseVideoDetector.extractYoutubeId(widget.video.url!);
-    if (widget.video.source == ExerciseVideoSource.youtube && videoId != null) {
+    if (_effectiveSource == ExerciseVideoSource.youtube && videoId != null) {
       _youtubeController = YoutubePlayerController(
         initialVideoId: videoId,
         flags: const YoutubePlayerFlags(
@@ -39,7 +42,7 @@ class _GymVideoPlayerScreenState extends State<GymVideoPlayerScreen> {
           enableCaption: true,
           forceHD: false,
         ),
-      );
+      )..addListener(_onControllerChanged);
     }
   }
 
@@ -51,53 +54,104 @@ class _GymVideoPlayerScreenState extends State<GymVideoPlayerScreen> {
 
   @override
   void dispose() {
+    _youtubeController?.removeListener(_onControllerChanged);
     _youtubeController?.dispose();
-    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    _restorePortraitOnly();
     super.dispose();
+  }
+
+  // ── Gestion plein écran custom ──
+  //
+  // Le `YoutubePlayerBuilder` du package v9 utilise `didChangeMetrics`, qui se
+  // déclenche aussi quand les barres système se masquent — donc en portrait
+  // pendant la rotation. Résultat : il sort tout seul du plein écran.
+  // On se branche directement sur le contrôleur à la place.
+  void _onControllerChanged() {
+    final c = _youtubeController;
+    if (c == null) return;
+    final wantsFullScreen = c.value.isFullScreen;
+    if (wantsFullScreen == _isFullScreen) return;
+    setState(() => _isFullScreen = wantsFullScreen);
+    if (wantsFullScreen) {
+      SystemChrome.setPreferredOrientations(const [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      _restorePortraitOnly();
+    }
+  }
+
+  void _restorePortraitOnly() {
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = _youtubeController;
     if (controller != null) {
-      return YoutubePlayerBuilder(
-        onExitFullScreen: () {
-          SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      final player = YoutubePlayer(
+        controller: controller,
+        showVideoProgressIndicator: true,
+        progressIndicatorColor: AppColors.accent,
+        progressColors: const ProgressBarColors(
+          playedColor: AppColors.accent,
+          handleColor: AppColors.accent,
+        ),
+      );
+
+      // Intercepte le bouton retour matériel pour sortir du plein écran d'abord.
+      return PopScope(
+        canPop: !_isFullScreen,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (_isFullScreen) controller.toggleFullScreenMode();
         },
-        player: YoutubePlayer(
-          controller: controller,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: AppColors.accent,
-          progressColors: const ProgressBarColors(
-            playedColor: AppColors.accent,
-            handleColor: AppColors.accent,
-          ),
-        ),
-        builder: (context, player) => _VideoScaffold(
-          title: widget.title,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: player,
+        child: _isFullScreen
+            ? Scaffold(
+                backgroundColor: Colors.black,
+                body: Center(child: player),
+              )
+            : _VideoScaffold(
+                title: widget.title,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: player,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      widget.video.url ?? '',
+                      style: AppTypography.bodySmall,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                widget.video.url ?? '',
-                style: AppTypography.bodySmall,
-              ),
-            ],
-          ),
-        ),
       );
     }
 
     return _VideoScaffold(
       title: widget.title,
-      child: _UnsupportedVideo(video: widget.video),
+      child: _UnsupportedVideo(
+        video: widget.video,
+        effectiveSource: _effectiveSource,
+      ),
     );
   }
+}
+
+ExerciseVideoSource _resolveSource(ExerciseVideo video) {
+  if (video.source != ExerciseVideoSource.unknown) return video.source;
+  final url = video.url;
+  if (url == null || url.isEmpty) return ExerciseVideoSource.unknown;
+  return ExerciseVideoDetector.detect(url);
 }
 
 class GymVideoLauncher extends StatelessWidget {
@@ -150,10 +204,11 @@ class GymVideoLauncher extends StatelessWidget {
   }
 
   static String videoLabel(ExerciseVideo video) {
-    if (video.source == ExerciseVideoSource.localFile) {
+    final source = _resolveSource(video);
+    if (source == ExerciseVideoSource.localFile) {
       return video.originalFileName ?? 'Vidéo locale';
     }
-    if (video.source == ExerciseVideoSource.youtube) {
+    if (source == ExerciseVideoSource.youtube) {
       return 'Lire la vidéo YouTube';
     }
     return video.url ?? 'Vidéo';
@@ -191,12 +246,16 @@ class _VideoScaffold extends StatelessWidget {
 
 class _UnsupportedVideo extends StatelessWidget {
   final ExerciseVideo video;
+  final ExerciseVideoSource effectiveSource;
 
-  const _UnsupportedVideo({required this.video});
+  const _UnsupportedVideo({
+    required this.video,
+    required this.effectiveSource,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final message = switch (video.source) {
+    final message = switch (effectiveSource) {
       ExerciseVideoSource.localFile =>
         'La lecture des vidéos locales sera ajoutée avec le lecteur fichier.',
       ExerciseVideoSource.directUrl =>

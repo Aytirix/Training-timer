@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/models/gym/exercise_video.dart';
 import '../../../core/models/gym/gym_exercise.dart';
 import '../../../core/models/gym/gym_session.dart';
 import '../../workouts/domain/workout_provider.dart';
 import '../data/gym_repository.dart';
+import '../services/exercise_video_detector.dart';
 
 final gymRepositoryProvider = Provider<GymRepository>((ref) {
   final storage = ref.watch(localStorageProvider);
@@ -45,7 +47,36 @@ class GymExercisesNotifier extends StateNotifier<GymExercisesState> {
   void _load() {
     state = state.copyWith(isLoading: true);
     final exercises = _repo.loadExercises();
-    state = state.copyWith(exercises: exercises, isLoading: false);
+    final healed = _healVideoSources(exercises);
+    if (healed != null) {
+      _repo.saveExercises(healed);
+      state = state.copyWith(exercises: healed, isLoading: false);
+    } else {
+      state = state.copyWith(exercises: exercises, isLoading: false);
+    }
+  }
+
+  /// Re-détecte la source des vidéos dont le `source` est `unknown` mais
+  /// dont l'URL correspond à une plateforme connue (legacy data, JSON imports
+  /// dépourvus de champ `source`). Retourne null si rien à corriger.
+  List<GymExercise>? _healVideoSources(List<GymExercise> exercises) {
+    var changed = false;
+    final result = <GymExercise>[];
+    for (final ex in exercises) {
+      final v = ex.video;
+      if (v != null &&
+          v.source == ExerciseVideoSource.unknown &&
+          v.url != null) {
+        final detected = ExerciseVideoDetector.detect(v.url!);
+        if (detected != ExerciseVideoSource.unknown) {
+          result.add(ex.copyWith(video: v.copyWith(source: detected)));
+          changed = true;
+          continue;
+        }
+      }
+      result.add(ex);
+    }
+    return changed ? result : null;
   }
 
   /// Crée ou met à jour un exercice.

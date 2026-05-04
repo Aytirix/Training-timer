@@ -5,6 +5,7 @@ import '../../../core/models/gym/gym_exercise.dart';
 import '../../../core/models/gym/gym_session.dart';
 import '../../../core/models/gym/gym_session_item.dart';
 import '../../../core/models/gym/gym_set.dart';
+import '../services/exercise_video_detector.dart';
 
 /// Erreur d'import JSON.
 class GymImportException implements Exception {
@@ -217,6 +218,11 @@ class GymSessionJsonCodec {
     final videoRaw = ex['video'];
     if (videoRaw is Map<String, dynamic>) {
       video = ExerciseVideo.fromPortableJson(videoRaw);
+      if (video.source == ExerciseVideoSource.unknown && video.url != null) {
+        video = video.copyWith(
+          source: ExerciseVideoDetector.detect(video.url!),
+        );
+      }
     }
     final spec = ImportedExerciseSpec(
       name: exName.trim(),
