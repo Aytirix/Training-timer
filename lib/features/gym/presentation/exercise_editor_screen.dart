@@ -112,12 +112,18 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
 
     final video = await _buildVideo();
     if (video != null && video.source == ExerciseVideoSource.directUrl) {
-      // on bloque seulement les URLs directes invalides
       if (!ExerciseVideoDetector.isValidDirectVideoUrl(video.url!)) {
         setState(() => _error =
             'URL vidéo directe invalide. Doit pointer vers un fichier vidéo lisible (.mp4, .webm…).');
         return;
       }
+    }
+    if (video != null &&
+        video.source == ExerciseVideoSource.youtube &&
+        ExerciseVideoDetector.extractYoutubeId(video.url!) == null) {
+      setState(() => _error =
+          'URL YouTube sans identifiant de vidéo. Colle un lien complet (ex: youtube.com/watch?v=…).');
+      return;
     }
 
     final exercise =
@@ -294,8 +300,14 @@ class _VideoUrlHint extends StatelessWidget {
         }
         break;
       case ExerciseVideoSource.youtube:
-        message = 'Cette vidéo YouTube sera affichée via le player YouTube.';
-        color = AppColors.active;
+        if (ExerciseVideoDetector.extractYoutubeId(url) == null) {
+          message =
+              'URL YouTube sans identifiant de vidéo. Colle un lien complet (ex: youtube.com/watch?v=…).';
+          color = AppColors.danger;
+        } else {
+          message = 'Cette vidéo YouTube sera affichée via le player YouTube.';
+          color = AppColors.active;
+        }
         break;
       case ExerciseVideoSource.platformLink:
         message =

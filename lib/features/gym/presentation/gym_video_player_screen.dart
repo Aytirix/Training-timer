@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../../../core/models/gym/exercise_video.dart';
@@ -105,7 +109,6 @@ class _GymVideoPlayerScreenState extends State<GymVideoPlayerScreen> {
         ),
       );
 
-      // Intercepte le bouton retour matériel pour sortir du plein écran d'abord.
       return PopScope(
         canPop: !_isFullScreen,
         onPopInvokedWithResult: (didPop, _) {
@@ -134,6 +137,37 @@ class _GymVideoPlayerScreenState extends State<GymVideoPlayerScreen> {
                   ],
                 ),
               ),
+      );
+    }
+
+    if (_effectiveSource == ExerciseVideoSource.localFile &&
+        widget.video.localPath != null) {
+      return _VideoScaffold(
+        title: widget.title,
+        child: _NativeVideoView(
+          source: _NativeVideoSource.file(widget.video.localPath!),
+          caption: widget.video.originalFileName,
+        ),
+      );
+    }
+
+    if (_effectiveSource == ExerciseVideoSource.directUrl &&
+        widget.video.url != null &&
+        ExerciseVideoDetector.isValidDirectVideoUrl(widget.video.url!)) {
+      return _VideoScaffold(
+        title: widget.title,
+        child: _NativeVideoView(
+          source: _NativeVideoSource.network(widget.video.url!),
+          caption: widget.video.url,
+        ),
+      );
+    }
+
+    if (_effectiveSource == ExerciseVideoSource.platformLink &&
+        widget.video.url != null) {
+      return _VideoScaffold(
+        title: widget.title,
+        child: _ExternalLinkView(url: widget.video.url!),
       );
     }
 
@@ -211,6 +245,9 @@ class GymVideoLauncher extends StatelessWidget {
     if (source == ExerciseVideoSource.youtube) {
       return 'Lire la vidéo YouTube';
     }
+    if (source == ExerciseVideoSource.platformLink) {
+      return 'Ouvrir le lien externe';
+    }
     return video.url ?? 'Vidéo';
   }
 }
@@ -244,6 +281,210 @@ class _VideoScaffold extends StatelessWidget {
   }
 }
 
+// ──────────── Lecteur natif (fichier local + URL directe .mp4) ────────────
+
+class _NativeVideoSource {
+  final String? filePath;
+  final String? networkUrl;
+
+  const _NativeVideoSource._({this.filePath, this.networkUrl});
+
+  factory _NativeVideoSource.file(String path) =>
+      _NativeVideoSource._(filePath: path);
+  factory _NativeVideoSource.network(String url) =>
+      _NativeVideoSource._(networkUrl: url);
+}
+
+class _NativeVideoView extends StatefulWidget {
+  final _NativeVideoSource source;
+  final String? caption;
+
+  const _NativeVideoView({required this.source, this.caption});
+
+  @override
+  State<_NativeVideoView> createState() => _NativeVideoViewState();
+}
+
+class _NativeVideoViewState extends State<_NativeVideoView> {
+  VideoPlayerController? _controller;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initController();
+  }
+
+  Future<void> _initController() async {
+    try {
+      final src = widget.source;
+      final controller = src.filePath != null
+          ? VideoPlayerController.file(File(src.filePath!))
+          : VideoPlayerController.networkUrl(Uri.parse(src.networkUrl!));
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      controller.addListener(() {
+        if (mounted) setState(() {});
+      });
+      await controller.play();
+      setState(() => _controller = controller);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Impossible de lire la vidéo : $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.danger),
+        ),
+        child: Text(_error!, style: AppTypography.bodyMedium),
+      );
+    }
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    controller.value.isPlaying
+                        ? controller.pause()
+                        : controller.play();
+                  },
+                  child: VideoPlayer(controller),
+                ),
+                VideoProgressIndicator(
+                  controller,
+                  allowScrubbing: true,
+                  colors: const VideoProgressColors(
+                    playedColor: AppColors.accent,
+                  ),
+                ),
+                if (!controller.value.isPlaying)
+                  const Center(
+                    child: Icon(Icons.play_circle_filled,
+                        color: Colors.white70, size: 64),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                controller.value.isPlaying
+                    ? controller.pause()
+                    : controller.play();
+              },
+              icon: Icon(controller.value.isPlaying
+                  ? Icons.pause
+                  : Icons.play_arrow),
+            ),
+            IconButton(
+              onPressed: () => controller.seekTo(Duration.zero),
+              icon: const Icon(Icons.replay),
+            ),
+            const Spacer(),
+            Text(
+              '${_fmt(controller.value.position)} / ${_fmt(controller.value.duration)}',
+              style: AppTypography.bodySmall,
+            ),
+          ],
+        ),
+        if (widget.caption != null && widget.caption!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(widget.caption!, style: AppTypography.bodySmall),
+        ],
+      ],
+    );
+  }
+
+  static String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final h = d.inHours;
+    return h > 0 ? '$h:$m:$s' : '$m:$s';
+  }
+}
+
+// ──────────── Lien externe (Instagram, TikTok, Vimeo…) ────────────
+
+class _ExternalLinkView extends StatelessWidget {
+  final String url;
+  const _ExternalLinkView({required this.url});
+
+  Future<void> _open(BuildContext context) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible d\'ouvrir le lien.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.open_in_new, color: AppColors.accent),
+          const SizedBox(height: 12),
+          const Text(
+            'Cette plateforme ne fournit pas de lecteur intégré. La vidéo s\'ouvre dans l\'application native ou le navigateur.',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Text(url, style: AppTypography.bodySmall),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => _open(context),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Ouvrir le lien'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _UnsupportedVideo extends StatelessWidget {
   final ExerciseVideo video;
   final ExerciseVideoSource effectiveSource;
@@ -257,11 +498,11 @@ class _UnsupportedVideo extends StatelessWidget {
   Widget build(BuildContext context) {
     final message = switch (effectiveSource) {
       ExerciseVideoSource.localFile =>
-        'La lecture des vidéos locales sera ajoutée avec le lecteur fichier.',
+        'Fichier local introuvable ou non chargé.',
       ExerciseVideoSource.directUrl =>
-        'Cette URL directe sera lue avec le lecteur vidéo intégré.',
+        'URL vidéo directe invalide. Vérifie qu\'elle pointe vers un fichier .mp4, .webm…',
       ExerciseVideoSource.platformLink =>
-        'Cette plateforme ne fournit pas encore de lecteur intégré dans l’app.',
+        'Lien externe sans URL valide.',
       ExerciseVideoSource.youtube =>
         'Impossible de récupérer l’identifiant de cette vidéo YouTube.',
       ExerciseVideoSource.unknown => 'Type de vidéo non reconnu.',

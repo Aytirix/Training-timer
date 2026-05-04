@@ -19,7 +19,9 @@
       "Bash(flutter test *)",
       "Bash(grep -rn \"Durée\\\\|durationSeconds\\\\|300s\\\\|'\\\\${.*}s'\" /home/theo/Documents/github/traction/lib/features/gym_execution/)",
       "Bash(grep -rn \"durationSeconds}s\\\\|'\\\\${.*duration.*}s'\\\\|'\\\\${.*Seconds}s'\" /home/theo/Documents/github/traction/lib/)",
-      "Bash(flutter build *)"
+      "Bash(flutter build *)",
+      "Bash(flutter pub *)",
+      "Bash(adb install *)"
     ],
     "additionalDirectories": [
       "/tmp/traction_debug"
