@@ -272,9 +272,8 @@ class _SetView extends StatelessWidget {
           Text(
             [
               'Série ${(step.setIndex ?? 0) + 1} / ${step.totalSets}',
-              if (type?.label.isNotEmpty == true) type!.label,
               if (set.durationSeconds != null)
-                'Durée ${_formatDurationLabel(set.durationSeconds!)}',
+                _formatDurationLabel(set.durationSeconds!),
             ].join(' • '),
             style: AppTypography.bodyMedium,
           ),
